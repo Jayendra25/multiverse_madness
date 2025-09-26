@@ -1,3 +1,10 @@
+interface GeologyData {
+  terrainType: 'ocean' | 'land' | 'coastal';
+  elevation: number; // meters
+  soilType: string;
+  waterDepth?: number; // for ocean impacts
+}
+
 export class DataIntegrationService {
   private nasaApiKey = process.env.NEXT_PUBLIC_NASA_API_KEY;
   private worldPopKey = process.env.WORLDPOP_API_KEY;
@@ -54,53 +61,24 @@ export class DataIntegrationService {
   }
 
   async fetchPopulationData(lat: number, lng: number, radius: number = 100) {
-    try {
-      // Try multiple sources for population data
-      
-      // Option 1: Use Nominatim for city identification + estimated density
-      const cityResponse = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`
-      );
-      const cityData = await cityResponse.json();
-      
-      // Estimate population density based on location type
-      let density = 100; // rural default
-      let urbanization = 0.2;
-      
-      if (cityData.address) {
-        if (cityData.address.city || cityData.address.town) {
-          density = 2000;
-          urbanization = 0.7;
-        }
-        if (cityData.address.state && ['New York', 'California', 'Tokyo', 'London'].some(major => 
-            cityData.display_name.includes(major))) {
-          density = 8000;
-          urbanization = 0.9;
-        }
-      }
-
-      return {
-        density,
-        urbanization,
-        nearbyMajorCities: Math.floor(Math.random() * 3) + 1,
-        coastalProximity: this.calculateCoastalDistance(lat, lng),
-        locationName: cityData.display_name || 'Unknown Location'
-      };
-      
-    } catch (error) {
-      console.error('Population API Error:', error);
-      // Return reasonable defaults
-      return {
-        density: 1000,
-        urbanization: 0.5,
-        nearbyMajorCities: 1,
-        coastalProximity: 50,
-        locationName: 'Unknown Location'
-      };
-    }
+    // This function is now a fallback and is not called by the API route.
+    // The primary data fetching logic has been moved to src/app/api/population/route.tsx
+    // to better align with Next.js data fetching patterns.
+    console.warn("Fallback `fetchPopulationData` was called. This should ideally be handled by the API route.");
+    return {
+      density: 1000,
+      urbanization: 0.5,
+      nearbyMajorCities: 1,
+      coastalProximity: this.calculateCoastalDistance(lat, lng),
+      locationName: 'Fallback Location'
+    };
   }
 
-  async fetchGeologyData(lat: number, lng: number) {
+  // The primary logic for fetching population data is now in the API route
+  // at src/app/api/population/route.tsx. This service method can be
+  // considered a fallback or deprecated.
+
+  async fetchGeologyData(lat: number, lng: number): Promise<GeologyData> {
     try {
       // USGS Elevation API (free, no key required)
       const elevationResponse = await fetch(
@@ -111,7 +89,7 @@ export class DataIntegrationService {
       
       // Determine terrain type based on coordinates and elevation
       const isNearCoast = this.calculateCoastalDistance(lat, lng) < 10;
-      const terrainType = elevation < 0 ? 'ocean' : isNearCoast ? 'coastal' : 'land';
+      const terrainType: 'ocean' | 'land' | 'coastal' = elevation < 0 ? 'ocean' : isNearCoast ? 'coastal' : 'land';
       
       return {
         terrainType,
@@ -123,7 +101,7 @@ export class DataIntegrationService {
     } catch (error) {
       console.error('Geology API Error:', error);
       return {
-        terrainType: 'land' as const,
+        terrainType: 'land',
         elevation: 100,
         soilType: 'mixed',
         waterDepth: undefined

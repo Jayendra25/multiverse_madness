@@ -59,7 +59,7 @@ export class EmailJSService {
     return this.isConfigured;
   }
 
-  async sendEmail(to: string, subject: string, htmlContent: string, textContent: string): Promise<EmailResult> {
+  async sendEmail(to: string, subject: string, templateParams: Record<string, unknown>): Promise<EmailResult> {
     console.log(`📧 EmailJS Email Attempt:`);
     console.log(`To: ${to}`);
     console.log(`Subject: ${subject}`);
@@ -70,7 +70,7 @@ export class EmailJSService {
       console.log(`📧 DEMO MODE - EmailJS email to ${to}:`);
       console.log(`─────────────────────────────────`);
       console.log(`Subject: ${subject}`);
-      console.log(`Content: ${textContent.substring(0, 200)}...`);
+      console.log(`Content: ${(templateParams.text_content as string || '').substring(0, 200)}...`);
       console.log(`─────────────────────────────────`);
       
       await new Promise(resolve => setTimeout(resolve, 2000));
@@ -83,20 +83,6 @@ export class EmailJSService {
 
     try {
       console.log(`📧 Sending REAL EMAIL via EmailJS...`);
-
-      // In the sendEmail method, update templateParams:
-const templateParams = {
-    to_email: to,
-    subject: subject,
-    html_content: htmlContent,
-    text_content: textContent,
-    from_name: 'DefendEarth Alert System',
-    reply_to: 'noreply@defendearth.com',
-    // Add any custom variables your template needs
-    user_location: location, // Make sure this matches your template variable
-    user_email: to
-  };
-  
 
       const result = await emailjs.send(
         this.serviceId,
@@ -189,7 +175,18 @@ Stay vigilant, stay protected!
 DefendEarth.com - Planetary Defense Initiative`;
 
     console.log('📧 Sending Welcome Email via EmailJS...');
-    return this.sendEmail(email, subject, htmlContent, textContent);
+    const templateParams = {
+      to_email: email,
+      subject: subject,
+      html_content: htmlContent,
+      text_content: textContent,
+      from_name: 'DefendEarth Alert System',
+      reply_to: 'noreply@defendearth.com',
+      // Add any custom variables your template needs
+      user_location: location, // Make sure this matches your template variable
+      user_email: email
+    };
+    return this.sendEmail(email, subject, templateParams);
   }
 
   // 🚨 Emergency Alert Email
@@ -305,7 +302,18 @@ Threat Level: ${asteroid.threatLevel}
 DefendEarth Emergency Alert System`;
 
     console.log('🚨 Sending Emergency Alert Email via EmailJS...');
-    return this.sendEmail(user.email, subject, htmlContent, textContent);
+    const templateParams = {
+      to_email: user.email,
+      subject: subject,
+      html_content: htmlContent,
+      text_content: textContent,
+      from_name: 'DefendEarth Alert System',
+      reply_to: 'noreply@defendearth.com',
+      // Add any custom variables your template needs
+      user_location: user.location, // Make sure this matches your template variable
+      user_email: user.email
+    };
+    return this.sendEmail(user.email, subject, templateParams);
   }
 
   // 🧪 Test Alert Email
@@ -378,7 +386,18 @@ Your planetary defense system is working correctly!
 DefendEarth Test System`;
 
     console.log('🧪 Sending Test Alert Email via EmailJS...');
-    return this.sendEmail(user.email, subject, htmlContent, textContent);
+    const templateParams = {
+      to_email: user.email,
+      subject: subject,
+      html_content: htmlContent,
+      text_content: textContent,
+      from_name: 'DefendEarth Alert System',
+      reply_to: 'noreply@defendearth.com',
+      // Add any custom variables your template needs
+      user_location: user.location, // Make sure this matches your template variable
+      user_email: user.email
+    };
+    return this.sendEmail(user.email, subject, templateParams);
   }
 
   async sendBulkEmergencyAlerts(users: User[], asteroid: AsteroidAlert): Promise<EmailResult[]> {

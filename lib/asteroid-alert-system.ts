@@ -5,8 +5,8 @@ import { NASAService } from './nasa-service';
 const globalUsers: User[] = [];
 
 export class AsteroidAlertSystem {
-  private emailService: NodemailerService;
-  private nasaService: NASAService;
+  private emailService!: NodemailerService;
+  private nasaService!: NASAService;
   private monitoringActive = false;
   private monitoringInterval: NodeJS.Timeout | null = null;
   private isInitialized = false;

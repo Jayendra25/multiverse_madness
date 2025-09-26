@@ -33,11 +33,11 @@ export class TwilioSMSService {
   private isConfigured: boolean = false;
 
   constructor() {
+    this.fromNumber = process.env.TWILIO_PHONE_NUMBER ?? '';
     try {
       const accountSid = process.env.TWILIO_ACCOUNT_SID;
       const authToken = process.env.TWILIO_AUTH_TOKEN;
-      this.fromNumber = process.env.TWILIO_PHONE_NUMBER || '';
-
+      
       console.log('🔍 Checking Twilio configuration...');
 
       if (!accountSid || !authToken || !this.fromNumber) {

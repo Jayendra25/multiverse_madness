@@ -49,9 +49,9 @@ interface AsteroidData {
   }
   
   export class AIRiskPredictor {
-    private populationModel: LinearRegressionModel;
-    private economicModel: RandomForestModel;
-    private deflectionModel: LogisticRegressionModel;
+    private populationModel!: LinearRegressionModel;
+    private economicModel!: RandomForestModel;
+    private deflectionModel!: LogisticRegressionModel;
   
     constructor() {
       this.initializeModels();
@@ -230,9 +230,9 @@ interface AsteroidData {
   }
   
   class RandomForestModel {
-    predict(features: any): number {
+    predict(features: Record<string, number>): number {
       // Simplified random forest - in production, use actual ML library
-      return Object.values(features).reduce((a: any, b: any) => a + b, 0) / Object.keys(features).length;
+      return Object.values(features).reduce((a, b) => a + b, 0) / Object.keys(features).length;
     }
   }
   

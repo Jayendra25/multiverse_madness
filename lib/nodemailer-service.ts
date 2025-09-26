@@ -48,17 +48,11 @@ export class NodemailerService {
 
     try {
       // Create transporter
-      this.transporter = nodemailer.createTransporter({
-        service: 'gmail',
-        host: 'smtp.gmail.com',
-        port: 587,
-        secure: false, // true for 465, false for other ports
+      this.transporter = nodemailer.createTransport({
+        service: 'gmail', // This automatically sets host, port, and secure options
         auth: {
           user: this.gmailUser,
           pass: this.gmailAppPassword,
-        },
-        tls: {
-          rejectUnauthorized: false
         }
       });
 
@@ -113,7 +107,7 @@ export class NodemailerService {
     try {
       console.log(`📧 Sending REAL EMAIL via Gmail...`);
 
-      const mailOptions = {
+      const mailOptions: nodemailer.SendMailOptions = {
         from: `"🛡️ DefendEarth Alert System" <${this.gmailUser}>`,
         to: to,
         subject: subject,

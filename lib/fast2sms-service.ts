@@ -1,3 +1,10 @@
+export interface SMSResult {
+  success: boolean;
+  messageId?: string;
+  error?: string;
+  cost?: number;
+}
+
 export class Fast2SMSService {
     private apiKey: string;
   
