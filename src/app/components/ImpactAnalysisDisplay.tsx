@@ -1,7 +1,14 @@
-'use client'
+"use client";
 
-import { motion, AnimatePresence } from 'framer-motion'
-import { AlertTriangle, Users, DollarSign, Target, Waves, Mountain } from 'lucide-react'
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  AlertTriangle,
+  Users,
+  DollarSign,
+  Target,
+  Waves,
+  Mountain,
+} from "lucide-react";
 
 interface ImpactAnalysisProps {
   data: {
@@ -21,7 +28,9 @@ export default function ImpactAnalysisDisplay({ data }: ImpactAnalysisProps) {
       <div className="text-center text-gray-400 py-8">
         <Target className="w-16 h-16 mx-auto mb-4 text-gray-600" />
         <p className="text-lg">Click on the Earth to analyze impact zones</p>
-        <p className="text-sm">Explore different continents and see real-time predictions</p>
+        <p className="text-sm">
+          Explore different continents and see real-time predictions
+        </p>
       </div>
     );
   }
@@ -40,13 +49,16 @@ export default function ImpactAnalysisDisplay({ data }: ImpactAnalysisProps) {
         <div className="bg-gradient-to-r from-red-900/40 to-orange-900/40 rounded-xl p-4 border border-red-500/30">
           <div className="flex items-center mb-2">
             <AlertTriangle className="w-6 h-6 text-red-400 mr-2" />
-            <h3 className="text-xl font-bold text-red-300">Impact Analysis Complete</h3>
+            <h3 className="text-xl font-bold text-red-300">
+              Impact Analysis Complete
+            </h3>
           </div>
           <p className="text-gray-300">
             <span className="font-semibold text-white">{data.location}</span>
           </p>
           <p className="text-sm text-gray-400">
-            Coordinates: {data.coordinates.lat.toFixed(4)}°, {data.coordinates.lng.toFixed(4)}°
+            Coordinates: {data.coordinates.lat.toFixed(4)}°,{" "}
+            {data.coordinates.lng.toFixed(4)}°
           </p>
         </div>
 
@@ -61,14 +73,14 @@ export default function ImpactAnalysisDisplay({ data }: ImpactAnalysisProps) {
           >
             <div className="flex items-center mb-3">
               <Users className="w-6 h-6 text-red-400 mr-2" />
-              <h4 className="font-semibold text-red-300">Estimated Casualties</h4>
+              <h4 className="font-semibold text-red-300">
+                Estimated Casualties
+              </h4>
             </div>
             <div className="text-2xl font-bold text-red-400 mb-1">
               {data.casualties.toLocaleString()}
             </div>
-            <div className="text-xs text-gray-400">
-              Within 100km radius
-            </div>
+            <div className="text-xs text-gray-400">Within 100km radius</div>
           </motion.div>
 
           {/* Economic Damage */}
@@ -104,9 +116,7 @@ export default function ImpactAnalysisDisplay({ data }: ImpactAnalysisProps) {
             <div className="text-2xl font-bold text-orange-400 mb-1">
               {data.craterSize} km
             </div>
-            <div className="text-xs text-gray-400">
-              Primary impact zone
-            </div>
+            <div className="text-xs text-gray-400">Primary impact zone</div>
           </motion.div>
         </div>
 
@@ -115,17 +125,20 @@ export default function ImpactAnalysisDisplay({ data }: ImpactAnalysisProps) {
           {data.tsunamiRisk && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
+              animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               className="bg-gradient-to-r from-cyan-900/40 to-blue-900/40 rounded-xl p-4 border border-cyan-500/30"
             >
               <div className="flex items-center mb-2">
                 <Waves className="w-6 h-6 text-cyan-400 mr-2" />
-                <h4 className="font-semibold text-cyan-300">⚠️ Tsunami Alert</h4>
+                <h4 className="font-semibold text-cyan-300">
+                  ⚠️ Tsunami Alert
+                </h4>
               </div>
               <p className="text-cyan-200 text-sm">
-                Ocean or coastal impact detected. Massive tsunamis would reach coastlines within hours,
-                potentially affecting millions across the Pacific Rim.
+                Ocean or coastal impact detected. Massive tsunamis would reach
+                coastlines within hours, potentially affecting millions across
+                the Pacific Rim.
               </p>
               <div className="mt-3 flex space-x-4 text-xs">
                 <div className="text-cyan-300">
@@ -146,32 +159,43 @@ export default function ImpactAnalysisDisplay({ data }: ImpactAnalysisProps) {
           transition={{ delay: 0.4 }}
           className="bg-gradient-to-r from-purple-900/30 to-blue-900/30 rounded-xl p-4 border border-purple-500/30"
         >
-          <h4 className="font-semibold text-purple-300 mb-3">Regional Assessment</h4>
+          <h4 className="font-semibold text-purple-300 mb-3">
+            Regional Assessment
+          </h4>
           <div className="grid md:grid-cols-2 gap-4 text-sm">
             <div>
               <span className="text-gray-300">Target Region:</span>
-              <span className="text-white ml-2 font-semibold">{data.continent}</span>
+              <span className="text-white ml-2 font-semibold">
+                {data.continent}
+              </span>
             </div>
             <div>
               <span className="text-gray-300">Threat Level:</span>
-              <span className={`ml-2 font-semibold ${
-                data.casualties > 5000000 ? 'text-red-400' :
-                data.casualties > 1000000 ? 'text-orange-400' : 'text-yellow-400'
-              }`}>
-                {data.casualties > 5000000 ? 'CATASTROPHIC' :
-                 data.casualties > 1000000 ? 'SEVERE' : 'HIGH'}
+              <span
+                className={`ml-2 font-semibold ${
+                  data.casualties > 5000000
+                    ? "text-red-400"
+                    : data.casualties > 1000000
+                    ? "text-orange-400"
+                    : "text-yellow-400"
+                }`}
+              >
+                {data.casualties > 5000000
+                  ? "CATASTROPHIC"
+                  : data.casualties > 1000000
+                  ? "SEVERE"
+                  : "HIGH"}
               </span>
             </div>
           </div>
-          
+
           <div className="mt-3 text-xs text-gray-400">
-            💡 <strong>Defense Recommendation:</strong> {
-              data.casualties > 5000000 
-                ? 'Nuclear deflection mission required with 15+ year lead time'
-                : data.casualties > 1000000
-                ? 'Kinetic impactor mission with 10+ year lead time'
-                : 'Multiple defense options available with 5+ year lead time'
-            }
+            💡 <strong>Defense Recommendation:</strong>{" "}
+            {data.casualties > 5000000
+              ? "Nuclear deflection mission required with 15+ year lead time"
+              : data.casualties > 1000000
+              ? "Kinetic impactor mission with 10+ year lead time"
+              : "Multiple defense options available with 5+ year lead time"}
           </div>
         </motion.div>
 

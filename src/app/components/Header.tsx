@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
-import EducationPage from "./MeteorScroll";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -23,7 +22,7 @@ const Header = () => {
     { name: "Satellite Simulation", href: "/sattelite-simmulation" },
     { name: "About", href: "#about" },
     { name: "Asteroid Launcher", href: "/asteroid-launcher" },
-    { name: "Learn ", href: "/learn"}
+    { name: "Learn ", href: "/learn" },
   ];
 
   const scrollTo = (id: string) => {

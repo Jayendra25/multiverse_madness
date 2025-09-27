@@ -2,7 +2,7 @@
 
 import React, { Suspense, useRef, useState, useCallback, useMemo } from "react";
 import { Canvas, useFrame, ThreeEvent } from "@react-three/fiber";
-import { OrbitControls, Sphere, Html } from "@react-three/drei";
+import { OrbitControls, Sphere } from "@react-three/drei";
 import * as THREE from "three";
 import { motion, AnimatePresence } from "framer-motion";
 import { Target } from "lucide-react";
@@ -12,6 +12,7 @@ interface ImpactPoint {
   coordinates: { lat: number; lng: number };
   continent: string;
   isAnimating: boolean;
+  id: string; // Added unique identifier
 }
 
 // Realistic Earth with proper materials and textures
@@ -72,7 +73,7 @@ function ClickableEarth({
       });
     };
 
-    // Draw continents
+    // Draw continents (simplified for better performance)
     drawContinent("ASIA", "#2d5a27", [
       {
         type: "polygon",
@@ -264,21 +265,21 @@ function ClickableEarth({
     ctx.clearRect(0, 0, 2048, 1024);
 
     const cloudRegions = [
-      { x: 0, y: 400, width: 2048, height: 200, density: 120 },
-      { x: 0, y: 250, width: 2048, height: 100, density: 60 },
-      { x: 0, y: 650, width: 2048, height: 100, density: 60 },
+      { x: 0, y: 400, width: 2048, height: 200, density: 80 }, // Reduced density for performance
+      { x: 0, y: 250, width: 2048, height: 100, density: 40 },
+      { x: 0, y: 650, width: 2048, height: 100, density: 40 },
     ];
 
     cloudRegions.forEach((region) => {
       for (let i = 0; i < region.density; i++) {
         const x = region.x + Math.random() * region.width;
         const y = region.y + Math.random() * region.height;
-        const radius = Math.random() * 40 + 15;
-        const opacity = Math.random() * 0.6 + 0.2;
+        const radius = Math.random() * 30 + 10; // Reduced radius
+        const opacity = Math.random() * 0.4 + 0.2; // Reduced opacity
 
         const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
         gradient.addColorStop(0, `rgba(255, 255, 255, ${opacity})`);
-        gradient.addColorStop(0.7, `rgba(255, 255, 255, ${opacity * 0.5})`);
+        gradient.addColorStop(0.7, `rgba(255, 255, 255, ${opacity * 0.3})`);
         gradient.addColorStop(1, `rgba(255, 255, 255, 0)`);
 
         ctx.fillStyle = gradient;
@@ -307,6 +308,7 @@ function ClickableEarth({
           coordinates: { lat, lng },
           continent,
           isAnimating: true,
+          id: `${Date.now()}-${Math.random()}`, // Add unique ID
         });
       }
     },
@@ -329,7 +331,7 @@ function ClickableEarth({
     <group>
       <Sphere
         ref={earthRef}
-        args={[2, 64, 64]}
+        args={[2, 32, 32]} // Reduced segments for better performance
         onClick={handleClick}
         onPointerOver={() => setHovered(true)}
         onPointerOut={() => setHovered(false)}
@@ -342,21 +344,27 @@ function ClickableEarth({
         />
       </Sphere>
 
-      <Sphere ref={cloudsRef} args={[2.02, 32, 32]}>
+      <Sphere ref={cloudsRef} args={[2.02, 24, 24]}>
+        {" "}
+        {/* Reduced segments */}
         <meshLambertMaterial
           map={cloudTexture}
           transparent
           opacity={0.4}
           color="#ffffff"
+          depthWrite={false} // Fix transparency issues
         />
       </Sphere>
 
-      <Sphere ref={atmosphereRef} args={[2.08, 32, 32]}>
+      <Sphere ref={atmosphereRef} args={[2.08, 24, 24]}>
+        {" "}
+        {/* Reduced segments */}
         <meshLambertMaterial
           color="#87ceeb"
           transparent
-          opacity={0.2}
+          opacity={0.15} // Reduced opacity
           side={THREE.BackSide}
+          depthWrite={false}
         />
       </Sphere>
 
@@ -364,8 +372,9 @@ function ClickableEarth({
         <meshBasicMaterial
           color="#4a9fff"
           transparent
-          opacity={0.05}
+          opacity={0.03} // Reduced opacity
           side={THREE.BackSide}
+          depthWrite={false}
         />
       </Sphere>
     </group>
@@ -384,12 +393,13 @@ function Animated3DMeteor({
 }) {
   const meteorGroupRef = useRef<THREE.Group>(null);
   const meteorBodyRef = useRef<THREE.Group>(null);
-  const trailParticles = useRef<THREE.Group[]>([]);
+  const trailParticles = useRef<(THREE.Group | null)[]>([]);
   const [hasImpacted, setHasImpacted] = useState(false);
+  const startTimeRef = useRef<number | null>(null);
 
   // Create irregular meteor shape
   const meteorGeometry = useMemo(() => {
-    const geometry = new THREE.SphereGeometry(0.08, 12, 8);
+    const geometry = new THREE.SphereGeometry(0.08, 8, 6); // Reduced complexity
     const positions = geometry.attributes.position.array as Float32Array;
 
     // Deform sphere to make it look like an irregular rock
@@ -399,12 +409,15 @@ function Animated3DMeteor({
       const z = positions[i + 2];
 
       // Add random deformations
-      const noise = (Math.random() - 0.5) * 0.3;
+      const noise = (Math.random() - 0.5) * 0.2; // Reduced noise
       const length = Math.sqrt(x * x + y * y + z * z);
 
-      positions[i] = x + (x / length) * noise;
-      positions[i + 1] = y + (y / length) * noise;
-      positions[i + 2] = z + (z / length) * noise;
+      if (length > 0) {
+        // Avoid division by zero
+        positions[i] = x + (x / length) * noise;
+        positions[i + 1] = y + (y / length) * noise;
+        positions[i + 2] = z + (z / length) * noise;
+      }
     }
 
     geometry.attributes.position.needsUpdate = true;
@@ -413,29 +426,36 @@ function Animated3DMeteor({
   }, []);
 
   useFrame((state) => {
-    if (meteorGroupRef.current && isActive && !hasImpacted) {
-      const time = state.clock.elapsedTime;
+    if (!isActive || hasImpacted) return;
 
-      const spaceDistance = 12;
+    if (startTimeRef.current === null) {
+      startTimeRef.current = state.clock.elapsedTime;
+    }
+
+    const currentTime = state.clock.elapsedTime;
+    const elapsed = currentTime - startTimeRef.current;
+    const flightDuration = 3; // Reduced duration
+
+    if (elapsed > flightDuration) {
+      if (!hasImpacted) {
+        setHasImpacted(true);
+        onImpact();
+      }
+      return;
+    }
+
+    const t = Math.min(elapsed / flightDuration, 1);
+
+    // Quadratic easing for more realistic motion
+    const easedT = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+
+    if (meteorGroupRef.current) {
+      const spaceDistance = 8; // Reduced distance
       const startPos: [number, number, number] = [
         target[0] * spaceDistance,
         target[1] * spaceDistance,
         target[2] * spaceDistance,
       ];
-
-      const flightDuration = 4;
-      const t = Math.min((time % (flightDuration + 2)) / flightDuration, 1);
-
-      if (t >= 1) {
-        if (!hasImpacted) {
-          setHasImpacted(true);
-          onImpact();
-        }
-        return;
-      }
-
-      // Realistic physics - quadratic acceleration
-      const easedT = t * t * (3 - 2 * t); // Smooth step function
 
       // Current position
       const currentPos: [number, number, number] = [
@@ -452,19 +472,19 @@ function Animated3DMeteor({
 
       // Realistic tumbling rotation
       if (meteorBodyRef.current) {
-        meteorBodyRef.current.rotation.x += 0.25 * (1 + t * 2);
-        meteorBodyRef.current.rotation.y += 0.15 * (1 + t * 2);
-        meteorBodyRef.current.rotation.z += 0.1 * (1 + t * 2);
+        meteorBodyRef.current.rotation.x += 0.2 * (1 + t * 2);
+        meteorBodyRef.current.rotation.y += 0.1 * (1 + t * 2);
+        meteorBodyRef.current.rotation.z += 0.05 * (1 + t * 2);
 
         // Scale increases as it heats up in atmosphere
-        const scale = 0.5 + t * 2.5;
+        const scale = 0.5 + t * 1.5; // Reduced scale
         meteorBodyRef.current.scale.set(scale, scale, scale);
       }
 
       // Update trail particles
       trailParticles.current.forEach((particle, index) => {
         if (particle) {
-          const delay = index * 0.1;
+          const delay = index * 0.08; // Reduced delay
           const trailT = Math.max(easedT - delay, 0);
 
           if (trailT > 0) {
@@ -476,29 +496,44 @@ function Animated3DMeteor({
             particle.position.set(trailPos[0], trailPos[1], trailPos[2]);
 
             // Fade and shrink trail particles over distance
-            const fadeAmount = Math.max(0.9 - index * 0.08, 0) * t;
+            const fadeAmount = Math.max(0.9 - index * 0.1, 0.1) * (1 - trailT);
             const scaleAmount =
-              Math.max(1 - index * 0.1, 0.2) * (0.5 + t * 1.5);
+              Math.max(0.8 - index * 0.08, 0.2) * (0.3 + trailT);
 
             particle.scale.set(scaleAmount, scaleAmount, scaleAmount);
+
+            // Update material opacity for all children
             particle.children.forEach((child) => {
-              if (child instanceof THREE.Mesh) {
+              if (child instanceof THREE.Mesh && child.material) {
                 const material = child.material as THREE.MeshBasicMaterial;
-                material.opacity = fadeAmount;
+                if (material.transparent) {
+                  material.opacity = fadeAmount;
+                  material.needsUpdate = true;
+                }
               }
             });
+          } else {
+            // Hide particle if not active
+            particle.visible = false;
           }
         }
       });
     }
   });
 
+  // Reset when target changes
   React.useEffect(() => {
     setHasImpacted(false);
+    startTimeRef.current = null;
+    trailParticles.current.forEach((particle) => {
+      if (particle) particle.visible = true;
+    });
   }, [target, isActive]);
 
+  if (!isActive) return null;
+
   return (
-    <group ref={meteorGroupRef} visible={isActive && !hasImpacted}>
+    <group ref={meteorGroupRef}>
       {/* Main 3D meteor body */}
       <group ref={meteorBodyRef}>
         {/* Rocky core */}
@@ -508,101 +543,46 @@ function Animated3DMeteor({
             roughness={0.9}
             metalness={0.1}
             emissive="#331100"
-            emissiveIntensity={0.5}
+            emissiveIntensity={0.3} // Reduced intensity
           />
         </mesh>
 
         {/* Heated surface layer */}
-        <mesh geometry={meteorGeometry} scale={[1.1, 1.1, 1.1]}>
+        <mesh geometry={meteorGeometry} scale={[1.05, 1.05, 1.05]}>
+          {" "}
+          {/* Reduced scale */}
           <meshBasicMaterial
             color="#ff4400"
             transparent
-            opacity={0.7}
-            emissive="#ff2200"
-            emissiveIntensity={2}
-          />
-        </mesh>
-
-        {/* Plasma glow */}
-        <mesh>
-          <sphereGeometry args={[0.12, 16, 16]} />
-          <meshBasicMaterial
-            color="#ffffff"
-            transparent
-            opacity={0.4}
-            emissive="#ffff88"
-            emissiveIntensity={3}
-          />
-        </mesh>
-
-        {/* Atmospheric compression glow */}
-        <mesh>
-          <sphereGeometry args={[0.18, 12, 12]} />
-          <meshBasicMaterial
-            color="#ff6600"
-            transparent
-            opacity={0.3}
-            emissive="#ff8800"
-            emissiveIntensity={1.5}
+            opacity={0.5} // Reduced opacity
+            side={THREE.BackSide}
           />
         </mesh>
       </group>
 
-      {/* 3D Fire trail particles */}
-      {Array.from({ length: 15 }).map((_, index) => (
-        <group
-          key={index}
-          ref={(el) => {
-            if (el) trailParticles.current[index] = el;
-          }}
-        >
-          {/* Fire core */}
-          <mesh>
-            <sphereGeometry
-              args={[Math.max(0.06 - index * 0.003, 0.015), 8, 8]}
-            />
-            <meshBasicMaterial
-              color={index < 5 ? "#ff0000" : index < 10 ? "#ff4400" : "#ff8800"}
-              transparent
-              opacity={0.9}
-              emissive={
-                index < 5 ? "#ff0000" : index < 10 ? "#ff2200" : "#ff6600"
-              }
-              emissiveIntensity={2}
-            />
-          </mesh>
-
-          {/* Outer flame */}
-          <mesh>
-            <sphereGeometry
-              args={[Math.max(0.08 - index * 0.004, 0.02), 6, 6]}
-            />
-            <meshBasicMaterial
-              color={index < 5 ? "#ff4400" : index < 10 ? "#ff6600" : "#ffaa00"}
-              transparent
-              opacity={0.6}
-              emissive={
-                index < 5 ? "#ff2200" : index < 10 ? "#ff4400" : "#ff8800"
-              }
-              emissiveIntensity={1.5}
-            />
-          </mesh>
-
-          {/* Smoke/heat distortion */}
-          <mesh>
-            <sphereGeometry
-              args={[Math.max(0.1 - index * 0.005, 0.025), 4, 4]}
-            />
-            <meshBasicMaterial
-              color="#666666"
-              transparent
-              opacity={Math.max(0.3 - index * 0.02, 0)}
-              emissive="#333333"
-              emissiveIntensity={0.5}
-            />
-          </mesh>
-        </group>
-      ))}
+      {/* Trail particles with reduced count */}
+      {Array.from({ length: 8 }).map(
+        (
+          _,
+          index // Reduced particle count
+        ) => (
+          <group
+            key={index}
+            ref={(el) => {
+              if (el) trailParticles.current[index] = el;
+            }}
+          >
+            <mesh>
+              <sphereGeometry args={[0.03, 6, 6]} /> {/* Simplified geometry */}
+              <meshBasicMaterial
+                color={index < 3 ? "#ff4400" : "#ff8800"}
+                transparent
+                opacity={0.7}
+              />
+            </mesh>
+          </group>
+        )
+      )}
     </group>
   );
 }
@@ -617,69 +597,65 @@ function ImpactMarker({
 }) {
   const markerRef = useRef<THREE.Group>(null);
   const explosionRef = useRef<THREE.Mesh>(null);
+  const startTimeRef = useRef<number | null>(null);
 
   useFrame((state) => {
-    if (markerRef.current && impact.isAnimating) {
-      const time = state.clock.elapsedTime;
-      const pulseScale = 1 + Math.sin(time * 12) * 0.8;
+    if (!impact.isAnimating) return;
+
+    if (startTimeRef.current === null) {
+      startTimeRef.current = state.clock.elapsedTime;
+    }
+
+    const elapsed = state.clock.elapsedTime - startTimeRef.current;
+
+    if (markerRef.current) {
+      const pulseScale = 1 + Math.sin(elapsed * 8) * 0.3; // Reduced pulse
       markerRef.current.scale.set(pulseScale, pulseScale, pulseScale);
 
       if (explosionRef.current) {
-        const growthScale = Math.min(time * 3, 5);
+        const growthScale = Math.min(elapsed * 2, 3); // Reduced growth
         explosionRef.current.scale.set(growthScale, growthScale, growthScale);
+
+        // Fade out
+        if (elapsed > 2) {
+          const material = explosionRef.current
+            .material as THREE.MeshBasicMaterial;
+          material.opacity = Math.max(0, 1 - (elapsed - 2) / 2);
+          material.transparent = true;
+        }
       }
 
-      if (time > 6) {
+      if (elapsed > 4) {
+        // Reduced animation duration
         onAnimationComplete();
       }
     }
   });
 
+  if (!impact.isAnimating) return null;
+
   return (
     <group ref={markerRef} position={impact.position}>
       {/* Main explosion */}
-      <Sphere ref={explosionRef} args={[0.1, 16, 16]}>
-        <meshBasicMaterial
-          color="#ff4500"
-          emissive="#ff0000"
-          emissiveIntensity={3}
-        />
+      <Sphere ref={explosionRef} args={[0.1, 12, 12]}>
+        {" "}
+        {/* Reduced segments */}
+        <meshBasicMaterial color="#ff4500" transparent opacity={1} />
       </Sphere>
 
-      {/* Shockwave rings */}
-      {[0.2, 0.35, 0.5, 0.8].map((radius, index) => (
+      {/* Reduced number of shockwave rings */}
+      {[0.2, 0.35].map((radius, index) => (
         <mesh key={index} rotation={[Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[radius, radius + 0.04, 24]} />
+          <ringGeometry args={[radius, radius + 0.03, 16]} />{" "}
+          {/* Reduced segments */}
           <meshBasicMaterial
             color="#ff6600"
             transparent
-            opacity={Math.max(0.9 - index * 0.2, 0.1)}
+            opacity={Math.max(0.7 - index * 0.3, 0.1)}
+            side={THREE.DoubleSide}
           />
         </mesh>
       ))}
-
-      {/* Debris particles */}
-      {Array.from({ length: 16 }).map((_, i) => {
-        const angle = (i / 16) * Math.PI * 2;
-        const radius = 0.4;
-        return (
-          <mesh
-            key={i}
-            position={[
-              Math.cos(angle) * radius,
-              Math.sin(angle * 0.7) * 0.15,
-              Math.sin(angle) * radius,
-            ]}
-          >
-            <sphereGeometry args={[0.02, 6, 6]} />
-            <meshBasicMaterial
-              color="#ff8800"
-              emissive="#ff4400"
-              emissiveIntensity={2}
-            />
-          </mesh>
-        );
-      })}
     </group>
   );
 }
@@ -690,13 +666,13 @@ function StarField() {
 
   const starGeometry = useMemo(() => {
     const geometry = new THREE.BufferGeometry();
-    const starCount = 6000;
+    const starCount = 2000; // Reduced star count for performance
     const positions = new Float32Array(starCount * 3);
 
     for (let i = 0; i < starCount * 3; i += 3) {
-      positions[i] = (Math.random() - 0.5) * 300;
-      positions[i + 1] = (Math.random() - 0.5) * 300;
-      positions[i + 2] = (Math.random() - 0.5) * 300;
+      positions[i] = (Math.random() - 0.5) * 200; // Reduced range
+      positions[i + 1] = (Math.random() - 0.5) * 200;
+      positions[i + 2] = (Math.random() - 0.5) * 200;
     }
 
     geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
@@ -705,13 +681,19 @@ function StarField() {
 
   useFrame(() => {
     if (starsRef.current) {
-      starsRef.current.rotation.y += 0.0002;
+      starsRef.current.rotation.y += 0.0001; // Slower rotation
     }
   });
 
   return (
     <points ref={starsRef} geometry={starGeometry}>
-      <pointsMaterial color="#ffffff" size={0.6} transparent opacity={0.8} />
+      <pointsMaterial
+        color="#ffffff"
+        size={0.8}
+        transparent
+        opacity={0.6}
+        sizeAttenuation={true}
+      />
     </points>
   );
 }
@@ -720,7 +702,7 @@ function StarField() {
 export default function Interactive3DEarth({
   onImpactAnalysis,
 }: {
-  onImpactAnalysis: (any) => void;
+  onImpactAnalysis: (data: any) => void;
 }) {
   const [impactPoints, setImpactPoints] = useState<ImpactPoint[]>([]);
   const [activeMeteor, setActiveMeteor] = useState<
@@ -728,9 +710,13 @@ export default function Interactive3DEarth({
   >(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [impactLocation, setImpactLocation] = useState<string>("");
+  const timeoutRef = useRef<NodeJS.Timeout>(null);
 
   const handleSurfaceClick = useCallback(
     async (clickData: any) => {
+      // Prevent multiple clicks during analysis
+      if (isAnalyzing) return;
+
       setIsAnalyzing(true);
       setImpactLocation(
         `${clickData.continent} - ${clickData.coordinates.lat.toFixed(
@@ -743,29 +729,53 @@ export default function Interactive3DEarth({
         isAnimating: true,
       };
 
-      setImpactPoints((prev) => [...prev.slice(-2), newImpact]);
+      setImpactPoints((prev) => [...prev.slice(-1), newImpact]); // Only keep last impact
       setActiveMeteor(clickData.position);
 
-      setTimeout(async () => {
-        const impactData = await analyzeImpactLocation(
-          clickData.coordinates,
-          clickData.continent
-        );
-        onImpactAnalysis({
-          ...impactData,
-          coordinates: clickData.coordinates,
-          continent: clickData.continent,
-        });
-        setIsAnalyzing(false);
+      // Clear any existing timeouts
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
 
-        setTimeout(() => {
-          setActiveMeteor(null);
-          setImpactPoints([]);
-          setImpactLocation("");
-        }, 4000);
-      }, 4000);
+      timeoutRef.current = setTimeout(async () => {
+        try {
+          const impactData = await analyzeImpactLocation(
+            clickData.coordinates,
+            clickData.continent
+          );
+          onImpactAnalysis({
+            ...impactData,
+            coordinates: clickData.coordinates,
+            continent: clickData.continent,
+          });
+        } catch (error) {
+          console.error("Impact analysis error:", error);
+          onImpactAnalysis({
+            location: `${clickData.continent} (${Math.abs(
+              clickData.coordinates.lat
+            ).toFixed(1)}°${
+              clickData.coordinates.lat >= 0 ? "N" : "S"
+            }, ${Math.abs(clickData.coordinates.lng).toFixed(1)}°${
+              clickData.coordinates.lng >= 0 ? "E" : "W"
+            })`,
+            casualties: Math.floor(Math.random() * 1000000),
+            economicDamage: Math.floor(Math.random() * 500),
+            craterSize: Math.floor(Math.random() * 20) + 5,
+            tsunamiRisk: Math.random() > 0.5,
+          });
+        } finally {
+          setIsAnalyzing(false);
+
+          // Clear impact after delay
+          timeoutRef.current = setTimeout(() => {
+            setActiveMeteor(null);
+            setImpactPoints([]);
+            setImpactLocation("");
+          }, 3000);
+        }
+      }, 3000); // Reduced delay
     },
-    [onImpactAnalysis]
+    [onImpactAnalysis, isAnalyzing]
   );
 
   const handleAnimationComplete = useCallback((index: number) => {
@@ -778,6 +788,15 @@ export default function Interactive3DEarth({
 
   const handleMeteorImpact = useCallback(() => {
     console.log("💥 3D Meteor has impacted Earth!");
+  }, []);
+
+  // Cleanup timeouts on unmount
+  React.useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
   }, []);
 
   return (
@@ -829,30 +848,33 @@ export default function Interactive3DEarth({
       {/* 3D Scene */}
       <Canvas
         camera={{ position: [0, 0, 8], fov: 50 }}
-        gl={{ antialias: true, alpha: false, toneMapping: THREE.NoToneMapping }}
+        gl={{
+          antialias: true,
+          alpha: false,
+          powerPreference: "high-performance",
+        }}
+        dpr={Math.min(window.devicePixelRatio, 2)} // Limit pixel ratio
       >
         <Suspense fallback={null}>
           {/* Enhanced lighting */}
-          <ambientLight intensity={0.3} color="#ffffff" />
+          <ambientLight intensity={0.4} color="#ffffff" />
           <directionalLight
-            position={[12, 8, 8]}
-            intensity={1.5}
+            position={[10, 5, 5]}
+            intensity={1.2}
             color="#ffffff"
-            castShadow
           />
           <pointLight
-            position={[-12, -8, -8]}
-            intensity={0.4}
+            position={[-10, -5, -5]}
+            intensity={0.3}
             color="#4488ff"
           />
-          <pointLight position={[0, 12, 0]} intensity={0.3} color="#ffaa88" />
 
           <StarField />
           <ClickableEarth onSurfaceClick={handleSurfaceClick} />
 
           {impactPoints.map((impact, index) => (
             <ImpactMarker
-              key={`impact-${index}-${Date.now()}`}
+              key={impact.id}
               impact={impact}
               onAnimationComplete={() => handleAnimationComplete(index)}
             />
@@ -868,13 +890,13 @@ export default function Interactive3DEarth({
           )}
 
           <OrbitControls
-            enablePan={false}
+            enablePan={true}
             enableZoom={true}
-            minDistance={5}
-            maxDistance={15}
+            minDistance={4}
+            maxDistance={12}
             autoRotate={false}
-            rotateSpeed={0.6}
-            zoomSpeed={1}
+            rotateSpeed={0.5}
+            zoomSpeed={0.8}
           />
         </Suspense>
       </Canvas>
@@ -884,42 +906,16 @@ export default function Interactive3DEarth({
 
 // Helper functions
 function getContinent(lat: number, lng: number): string {
+  // Simplified continent detection
   if (lat > 75) return "Arctic Ocean";
   if (lat < -60) return "Antarctica";
-
-  const normLng = lng < 0 ? lng + 360 : lng;
-
-  if (normLng >= 350 || normLng <= 60) {
-    if (lat >= 35 && lat <= 75) {
-      if (normLng >= 350 || normLng <= 40) return "Europe";
-    }
-  }
-
-  if (normLng >= 340 || normLng <= 55) {
-    if (lat >= -35 && lat <= 35) {
-      return "Africa";
-    }
-  }
-
-  if (normLng >= 60 && normLng <= 180 && lat >= 10 && lat <= 75) {
-    return "Asia";
-  }
-
-  if (normLng >= 110 && normLng <= 180 && lat >= -50 && lat <= -10) {
+  if (lat > 10 && lng > 60 && lng < 180) return "Asia";
+  if (lat > -35 && lat < 35 && lng > -20 && lng < 55) return "Africa";
+  if (lat > 15 && lat < 75 && lng > -170 && lng < -50) return "North America";
+  if (lat > -55 && lat < 15 && lng > -80 && lng < -35) return "South America";
+  if (lat > 35 && lat < 75 && lng > -10 && lng < 60) return "Europe";
+  if (lat > -50 && lat < -10 && lng > 110 && lng < 180)
     return "Australia/Oceania";
-  }
-
-  if ((normLng >= 180 && normLng <= 360) || normLng <= 330) {
-    if (lat >= 15 && lat <= 75) {
-      if (normLng >= 200 && normLng <= 330) return "North America";
-    }
-  }
-
-  if (normLng >= 270 && normLng <= 330) {
-    if (lat >= -60 && lat <= 15) {
-      return "South America";
-    }
-  }
 
   return "Ocean";
 }
@@ -928,13 +924,16 @@ async function analyzeImpactLocation(
   coordinates: { lat: number; lng: number },
   continent: string
 ) {
+  // Simulate API call delay
+  await new Promise((resolve) => setTimeout(resolve, 500));
+
   const isOcean = continent === "Ocean";
   const isPopulated = !["Arctic Ocean", "Antarctica", "Ocean"].includes(
     continent
   );
 
   const baseMultiplier = isPopulated ? 1 : 0.1;
-  const tsunamiMultiplier = isOcean ? 3 : 1;
+  const tsunamiMultiplier = isOcean ? 2 : 1;
 
   return {
     location: `${continent} (${Math.abs(coordinates.lat).toFixed(1)}°${
@@ -943,11 +942,11 @@ async function analyzeImpactLocation(
       coordinates.lng >= 0 ? "E" : "W"
     })`,
     casualties: Math.floor(
-      (Math.random() * 8000000 + 500000) * baseMultiplier * tsunamiMultiplier
+      (Math.random() * 5000000 + 500000) * baseMultiplier * tsunamiMultiplier
     ),
-    economicDamage: Math.floor((Math.random() * 800 + 100) * baseMultiplier),
-    craterSize: Math.floor(Math.random() * 25) + 8,
+    economicDamage: Math.floor((Math.random() * 500 + 100) * baseMultiplier),
+    craterSize: Math.floor(Math.random() * 20) + 5,
     tsunamiRisk:
-      isOcean || (Math.abs(coordinates.lat) < 60 && Math.random() > 0.6),
+      isOcean || (Math.abs(coordinates.lat) < 60 && Math.random() > 0.7),
   };
 }

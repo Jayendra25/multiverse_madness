@@ -343,14 +343,13 @@ export default function DynamicImpactDashboard() {
         </motion.div>
 
         {/* Gmail Email Alert Registration Component */}
+        <EmailAlertRegistration />
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.0 }}
           className="mt-8"
-        >
-          <EmailAlertRegistration />
-        </motion.div>
+        ></motion.div>
 
         {/* Data Source Attribution */}
         <motion.div

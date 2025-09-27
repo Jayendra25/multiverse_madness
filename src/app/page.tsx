@@ -30,7 +30,6 @@ export default function Home() {
           </div>
           <AIRiskDashboard />
           <div id="EmailAlertRegistration">
-            <EmailAlertRegistration />
             <DynamicImpactDashboard />
           </div>
           <AboutSection />
