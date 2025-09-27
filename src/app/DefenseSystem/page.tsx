@@ -2,11 +2,21 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Play, Shield, Zap, Target, Home, X } from "lucide-react";
+import {
+  ArrowLeft,
+  Play,
+  Shield,
+  Zap,
+  Target,
+  Home,
+  X,
+  Menu,
+} from "lucide-react";
 import Link from "next/link";
 
 export default function Page() {
   const [scrollY, setScrollY] = useState(0);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -19,6 +29,7 @@ export default function Page() {
     if (element) {
       element.scrollIntoView({ behavior: "smooth" });
     }
+    setIsMobileMenuOpen(false);
   };
 
   const deploySystem = (systemType: string) => {
@@ -68,47 +79,88 @@ export default function Page() {
         </motion.div>
       </div>
 
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/80 backdrop-blur-md z-40 lg:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        >
+          <div className="flex flex-col items-center justify-center h-full space-y-8">
+            <button
+              onClick={scrollToSystems}
+              className="text-2xl text-white font-mono uppercase tracking-wider hover:text-blue-400 transition-colors"
+            >
+              Defense Systems
+            </button>
+            <Link
+              href="/"
+              className="text-2xl text-white font-mono uppercase tracking-wider hover:text-blue-400 transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Back to Dashboard
+            </Link>
+            <button
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="absolute top-8 right-8 text-white p-2"
+            >
+              <X className="w-8 h-8" />
+            </button>
+          </div>
+        </motion.div>
+      )}
+
       {/* Content */}
       <div className="relative z-10">
         {/* Hero Section */}
-        <section className="min-h-screen flex flex-col justify-center items-center px-6 md:px-10 relative">
-          {/* Status Bar */}
+        <section className="min-h-screen flex flex-col justify-center items-center px-4 sm:px-6 md:px-10 relative pt-20 pb-10">
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="lg:hidden absolute top-6 left-6 z-50 p-2 text-white bg-gray-800/80 rounded-lg"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+
+          {/* Status Bar - Responsive */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="absolute top-10 left-1/2 -translate-x-1/2 flex items-center gap-6 bg-gray-800/90 backdrop-blur-md px-8 py-3 rounded-lg border border-gray-700"
+            className="absolute top-6 right-4 left-4 lg:top-10 lg:left-1/2 lg:-translate-x-1/2 lg:w-auto flex flex-col lg:flex-row items-center gap-2 lg:gap-6 bg-gray-800/90 backdrop-blur-md px-4 lg:px-8 py-2 lg:py-3 rounded-lg border border-gray-700 text-center lg:text-left"
           >
-            <div className="flex items-center gap-2 text-red-400 font-mono text-sm font-medium uppercase tracking-wider">
+            <div className="flex items-center gap-2 text-red-400 font-mono text-xs lg:text-sm font-medium uppercase tracking-wider justify-center lg:justify-start">
               <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse" />
               Threat Level: Critical
             </div>
-            <div className="text-gray-400">|</div>
-            <div className="text-gray-300 font-mono text-sm">
+            <div className="hidden lg:block text-gray-400">|</div>
+            <div className="text-gray-300 font-mono text-xs lg:text-sm">
               Systems: Online
             </div>
-            <div className="text-gray-400">|</div>
-            <div className="text-gray-300 font-mono text-sm">
+            <div className="hidden lg:block text-gray-400">|</div>
+            <div className="text-gray-300 font-mono text-xs lg:text-sm">
               Command: Active
             </div>
           </motion.div>
 
-          {/* Back Button */}
+          {/* Back Button - Desktop Only */}
           <Link
             href="/"
-            className="absolute top-20 left-10 flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-semibold transition-all duration-300"
+            className="hidden lg:flex absolute top-20 left-10 items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-semibold transition-all duration-300"
           >
             <ArrowLeft className="w-5 h-5" />
             Back to DefendEarth
           </Link>
 
-          {/* Earth Visual */}
+          {/* Earth Visual - Responsive */}
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1.2 }}
-            className="relative mb-16"
+            className="relative mb-8 lg:mb-16"
           >
-            <div className="w-44 h-44 relative">
+            <div className="w-32 h-32 sm:w-40 sm:h-40 lg:w-44 lg:h-44 relative">
               {/* Earth */}
               <motion.div
                 animate={{ rotate: 360 }}
@@ -123,30 +175,30 @@ export default function Page() {
                 }}
               >
                 {/* Continents */}
-                <div className="absolute top-8 left-10 w-9 h-6 bg-gray-500 rounded-full opacity-60" />
-                <div className="absolute bottom-9 right-6 w-11 h-8 bg-gray-500 rounded-full opacity-60" />
+                <div className="absolute top-6 left-8 sm:top-8 sm:left-10 w-6 h-4 sm:w-9 sm:h-6 bg-gray-500 rounded-full opacity-60" />
+                <div className="absolute bottom-7 right-4 sm:bottom-9 sm:right-6 w-8 h-6 sm:w-11 sm:h-8 bg-gray-500 rounded-full opacity-60" />
               </motion.div>
 
               {/* Trajectory Line */}
-              <div className="absolute top-1/2 -right-24 w-48 h-0.5 bg-gradient-to-r from-transparent via-gray-300 to-transparent rotate-[-25deg] animate-pulse" />
+              <div className="absolute top-1/2 -right-16 sm:-right-20 lg:-right-24 w-32 sm:w-40 lg:w-48 h-0.5 bg-gradient-to-r from-transparent via-gray-300 to-transparent rotate-[-25deg] animate-pulse" />
 
               {/* Asteroid */}
               <motion.div
                 initial={{ x: 180, y: -80, scale: 0.3, opacity: 0.4 }}
                 animate={{ x: 0, y: 0, scale: 1, opacity: 1 }}
                 transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-                className="absolute top-5 right-5 w-3 h-3 bg-gray-300 rounded-full shadow-lg"
+                className="absolute top-4 right-4 sm:top-5 sm:right-5 w-2 h-2 sm:w-3 sm:h-3 bg-gray-300 rounded-full shadow-lg"
                 style={{ boxShadow: "0 0 10px rgba(255,255,255,0.5)" }}
               />
             </div>
           </motion.div>
 
-          {/* Title */}
+          {/* Title - Responsive */}
           <motion.h1
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.5 }}
-            className="text-5xl md:text-7xl font-bold text-center text-white mb-6 uppercase tracking-wider font-mono"
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold text-center text-white mb-4 lg:mb-6 uppercase tracking-wider font-mono px-4"
             style={{ textShadow: "0 0 30px rgba(255,255,255,0.1)" }}
           >
             Earth Defense Command
@@ -156,41 +208,47 @@ export default function Page() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 0.8 }}
-            className="text-gray-400 text-center text-sm md:text-base uppercase tracking-widest font-mono mb-12"
+            className="text-gray-400 text-center text-xs sm:text-sm lg:text-base uppercase tracking-widest font-mono mb-8 lg:mb-12 px-4"
           >
             Planetary Protection Protocol
           </motion.p>
 
-          {/* Mission Brief */}
+          {/* Mission Brief - Responsive */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 1.1 }}
-            className="max-w-3xl text-center bg-gray-800/60 backdrop-blur-md p-10 rounded-2xl border border-gray-700"
+            className="w-full max-w-4xl text-center bg-gray-800/60 backdrop-blur-md p-6 sm:p-8 lg:p-10 rounded-2xl border border-gray-700 mx-4"
           >
-            <p className="text-lg leading-relaxed mb-8">
+            <p className="text-sm sm:text-base lg:text-lg leading-relaxed mb-6 lg:mb-8">
               Asteroid designation "Firefly" has been detected on direct
               collision trajectory with Earth. Multiple defense systems are
               operational and awaiting deployment authorization. Command
               decision required for immediate threat neutralization.
             </p>
 
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-8 pt-8 border-t border-gray-700">
+            {/* Stats - Responsive */}
+            <div className="grid grid-cols-3 gap-4 sm:gap-6 lg:gap-8 pt-6 lg:pt-8 border-t border-gray-700">
               <div className="text-center font-mono">
-                <div className="text-3xl font-bold text-white">72H</div>
+                <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">
+                  72H
+                </div>
                 <div className="text-xs text-gray-400 uppercase tracking-wider mt-1">
                   Time to Impact
                 </div>
               </div>
               <div className="text-center font-mono">
-                <div className="text-3xl font-bold text-white">3</div>
+                <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">
+                  3
+                </div>
                 <div className="text-xs text-gray-400 uppercase tracking-wider mt-1">
                   Systems Ready
                 </div>
               </div>
               <div className="text-center font-mono">
-                <div className="text-3xl font-bold text-white">98%</div>
+                <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">
+                  98%
+                </div>
                 <div className="text-xs text-gray-400 uppercase tracking-wider mt-1">
                   Mission Success
                 </div>
@@ -198,13 +256,13 @@ export default function Page() {
             </div>
           </motion.div>
 
-          {/* CTA Button */}
+          {/* CTA Button - Responsive */}
           <motion.button
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1, delay: 1.4 }}
             onClick={scrollToSystems}
-            className="mt-12 px-12 py-5 bg-white text-black font-mono font-semibold text-sm uppercase tracking-wider rounded-lg hover:bg-gray-200 hover:-translate-y-1 hover:shadow-xl transition-all duration-300 relative overflow-hidden group"
+            className="mt-8 lg:mt-12 px-8 sm:px-10 lg:px-12 py-4 sm:py-4 lg:py-5 bg-white text-black font-mono font-semibold text-xs sm:text-sm uppercase tracking-wider rounded-lg hover:bg-gray-200 hover:-translate-y-1 hover:shadow-xl transition-all duration-300 relative overflow-hidden group mx-4"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-600" />
             Initialize Defense Systems
@@ -214,7 +272,7 @@ export default function Page() {
         {/* Defense Systems Section */}
         <section
           id="defense-systems"
-          className="py-32 px-6 md:px-10 bg-gradient-to-b from-black to-gray-900"
+          className="py-16 sm:py-24 lg:py-32 px-4 sm:px-6 lg:px-10 bg-gradient-to-b from-black to-gray-900"
         >
           <div className="max-w-7xl mx-auto">
             {/* Section Header */}
@@ -222,43 +280,43 @@ export default function Page() {
               initial={{ opacity: 0, y: 50 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 1 }}
-              className="text-center mb-20"
+              className="text-center mb-12 lg:mb-20"
             >
-              <h2 className="text-4xl md:text-5xl font-bold text-white uppercase tracking-wider font-mono mb-5">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold text-white uppercase tracking-wider font-mono mb-4 lg:mb-5">
                 Defense Systems
               </h2>
-              <p className="text-gray-400 text-sm uppercase tracking-widest font-mono">
+              <p className="text-gray-400 text-xs sm:text-sm uppercase tracking-widest font-mono">
                 Available Threat Neutralization Protocols
               </p>
             </motion.div>
 
-            {/* Systems Grid */}
-            <div className="grid lg:grid-cols-2 xl:grid-cols-3 gap-10">
+            {/* Systems Grid - Responsive */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 sm:gap-8 lg:gap-10">
               {/* System 1: Kinetic Impactor */}
               <motion.div
                 initial={{ opacity: 0, y: 50 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.1 }}
                 whileHover={{ y: -8 }}
-                className="bg-gray-800/40 backdrop-blur-md border border-gray-700 rounded-2xl p-11 hover:border-gray-500 hover:bg-gray-800/70 transition-all duration-400 relative group"
+                className="bg-gray-800/40 backdrop-blur-md border border-gray-700 rounded-2xl p-6 sm:p-8 lg:p-11 hover:border-gray-500 hover:bg-gray-800/70 transition-all duration-400 relative group"
               >
                 <div className="absolute top-0 left-0 right-0 h-0.5 bg-gray-500 opacity-0 group-hover:opacity-100 transition-opacity duration-400" />
 
-                <div className="flex justify-between items-center mb-8">
+                <div className="flex justify-between items-center mb-6 lg:mb-8">
                   <span className="text-gray-400 text-xs font-mono uppercase tracking-wider">
                     System 001
                   </span>
-                  <span className="px-3 py-1 bg-green-500/20 text-green-400 border border-green-500/30 rounded-full text-xs font-mono uppercase tracking-wide">
+                  <span className="px-2 py-1 sm:px-3 sm:py-1 bg-green-500/20 text-green-400 border border-green-500/30 rounded-full text-xs font-mono uppercase tracking-wide">
                     Operational
                   </span>
                 </div>
 
-                <h3 className="text-2xl font-bold text-white uppercase tracking-wide font-mono mb-5">
-                  <Target className="inline-block w-6 h-6 mr-2" />
+                <h3 className="text-xl sm:text-2xl font-bold text-white uppercase tracking-wide font-mono mb-4 lg:mb-5">
+                  <Target className="inline-block w-5 h-5 sm:w-6 sm:h-6 mr-2" />
                   Kinetic Impactor
                 </h3>
 
-                <p className="text-gray-400 leading-relaxed mb-6 text-sm">
+                <p className="text-gray-400 leading-relaxed mb-4 lg:mb-6 text-xs sm:text-sm">
                   High-velocity spacecraft collision system engineered for
                   precise trajectory modification through kinetic energy
                   transfer. Proven technology based on NASA's DART mission
@@ -267,9 +325,9 @@ export default function Page() {
                 </p>
 
                 <motion.div
-                  whileHover={{ scale: 2, zIndex: 10 }}
+                  whileHover={{ scale: 1.05, zIndex: 10 }}
                   transition={{ duration: 0.3 }}
-                  className="w-full h-48 bg-black border border-gray-700 rounded-lg flex items-center justify-center text-white font-mono text-sm relative mb-6 cursor-pointer"
+                  className="w-full h-40 sm:h-48 bg-black border border-gray-700 rounded-lg flex items-center justify-center text-white font-mono text-sm relative mb-4 lg:mb-6 cursor-pointer"
                 >
                   <video
                     src="/media1.webm"
@@ -281,8 +339,8 @@ export default function Page() {
                 </motion.div>
 
                 {/* Specs */}
-                <div className="bg-gray-900/80 p-6 rounded-lg border-l-2 border-gray-500 mb-6">
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-900/80 p-4 sm:p-6 rounded-lg border-l-2 border-gray-500 mb-4 lg:mb-6">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
                     <div className="flex justify-between font-mono text-xs">
                       <span className="text-gray-400 uppercase">
                         Success Rate
@@ -310,7 +368,7 @@ export default function Page() {
 
                 <button
                   onClick={() => deploySystem("kinetic")}
-                  className="w-full py-4 bg-transparent border border-gray-500 text-white font-mono font-semibold text-sm uppercase tracking-wide rounded-lg hover:bg-white hover:text-black transition-all duration-300 relative overflow-hidden group"
+                  className="w-full py-3 sm:py-4 bg-transparent border border-gray-500 text-white font-mono font-semibold text-xs sm:text-sm uppercase tracking-wide rounded-lg hover:bg-white hover:text-black transition-all duration-300 relative overflow-hidden group"
                 >
                   <div className="absolute inset-0 bg-white transform -translate-x-full group-hover:translate-x-0 transition-transform duration-400 -z-10" />
                   Deploy System
@@ -323,25 +381,25 @@ export default function Page() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
                 whileHover={{ y: -8 }}
-                className="bg-gray-800/40 backdrop-blur-md border border-gray-700 rounded-2xl p-11 hover:border-gray-500 hover:bg-gray-800/70 transition-all duration-400 relative group"
+                className="bg-gray-800/40 backdrop-blur-md border border-gray-700 rounded-2xl p-6 sm:p-8 lg:p-11 hover:border-gray-500 hover:bg-gray-800/70 transition-all duration-400 relative group"
               >
                 <div className="absolute top-0 left-0 right-0 h-0.5 bg-gray-500 opacity-0 group-hover:opacity-100 transition-opacity duration-400" />
 
-                <div className="flex justify-between items-center mb-8">
+                <div className="flex justify-between items-center mb-6 lg:mb-8">
                   <span className="text-gray-400 text-xs font-mono uppercase tracking-wider">
                     System 002
                   </span>
-                  <span className="px-3 py-1 bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 rounded-full text-xs font-mono uppercase tracking-wide">
+                  <span className="px-2 py-1 sm:px-3 sm:py-1 bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 rounded-full text-xs font-mono uppercase tracking-wide">
                     Development
                   </span>
                 </div>
 
-                <h3 className="text-2xl font-bold text-white uppercase tracking-wide font-mono mb-5">
-                  <Zap className="inline-block w-6 h-6 mr-2" />
+                <h3 className="text-xl sm:text-2xl font-bold text-white uppercase tracking-wide font-mono mb-4 lg:mb-5">
+                  <Zap className="inline-block w-5 h-5 sm:w-6 sm:h-6 mr-2" />
                   Firefly Light Array
                 </h3>
 
-                <p className="text-gray-400 leading-relaxed mb-6 text-sm">
+                <p className="text-gray-400 leading-relaxed mb-4 lg:mb-6 text-xs sm:text-sm">
                   Distributed satellite constellation deploying concentrated
                   photon beams for precision thermal manipulation. Advanced
                   targeting algorithms create asymmetric heating patterns to
@@ -350,9 +408,9 @@ export default function Page() {
                 </p>
 
                 <motion.div
-                  whileHover={{ scale: 2, zIndex: 10 }}
+                  whileHover={{ scale: 1.05, zIndex: 10 }}
                   transition={{ duration: 0.3 }}
-                  className="w-full h-48 bg-black border border-gray-700 rounded-lg flex items-center justify-center text-white font-mono text-sm relative mb-6 cursor-pointer"
+                  className="w-full h-40 sm:h-48 bg-black border border-gray-700 rounded-lg flex items-center justify-center text-white font-mono text-sm relative mb-4 lg:mb-6 cursor-pointer"
                 >
                   <video
                     src="/media2.webm"
@@ -364,8 +422,8 @@ export default function Page() {
                 </motion.div>
 
                 {/* Specs */}
-                <div className="bg-gray-900/80 p-6 rounded-lg border-l-2 border-gray-500 mb-6">
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-900/80 p-4 sm:p-6 rounded-lg border-l-2 border-gray-500 mb-4 lg:mb-6">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
                     <div className="flex justify-between font-mono text-xs">
                       <span className="text-gray-400 uppercase">
                         Satellites
@@ -395,7 +453,7 @@ export default function Page() {
 
                 <button
                   onClick={() => deploySystem("firefly")}
-                  className="w-full py-4 bg-transparent border border-gray-500 text-white font-mono font-semibold text-sm uppercase tracking-wide rounded-lg hover:bg-white hover:text-black transition-all duration-300 relative overflow-hidden group"
+                  className="w-full py-3 sm:py-4 bg-transparent border border-gray-500 text-white font-mono font-semibold text-xs sm:text-sm uppercase tracking-wide rounded-lg hover:bg-white hover:text-black transition-all duration-300 relative overflow-hidden group"
                 >
                   <div className="absolute inset-0 bg-white transform -translate-x-full group-hover:translate-x-0 transition-transform duration-400 -z-10" />
                   Deploy System
@@ -408,25 +466,25 @@ export default function Page() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.3 }}
                 whileHover={{ y: -8 }}
-                className="bg-gray-800/40 backdrop-blur-md border border-gray-700 rounded-2xl p-11 hover:border-gray-500 hover:bg-gray-800/70 transition-all duration-400 relative group lg:col-span-2 xl:col-span-1"
+                className="bg-gray-800/40 backdrop-blur-md border border-gray-700 rounded-2xl p-6 sm:p-8 lg:p-11 hover:border-gray-500 hover:bg-gray-800/70 transition-all duration-400 relative group md:col-span-2 xl:col-span-1"
               >
                 <div className="absolute top-0 left-0 right-0 h-0.5 bg-gray-500 opacity-0 group-hover:opacity-100 transition-opacity duration-400" />
 
-                <div className="flex justify-between items-center mb-8">
+                <div className="flex justify-between items-center mb-6 lg:mb-8">
                   <span className="text-gray-400 text-xs font-mono uppercase tracking-wider">
                     System 003
                   </span>
-                  <span className="px-3 py-1 bg-red-500/20 text-red-400 border border-red-500/30 rounded-full text-xs font-mono uppercase tracking-wide">
+                  <span className="px-2 py-1 sm:px-3 sm:py-1 bg-red-500/20 text-red-400 border border-red-500/30 rounded-full text-xs font-mono uppercase tracking-wide">
                     Experimental
                   </span>
                 </div>
 
-                <h3 className="text-2xl font-bold text-white uppercase tracking-wide font-mono mb-5">
-                  <Shield className="inline-block w-6 h-6 mr-2" />
+                <h3 className="text-xl sm:text-2xl font-bold text-white uppercase tracking-wide font-mono mb-4 lg:mb-5">
+                  <Shield className="inline-block w-5 h-5 sm:w-6 sm:h-6 mr-2" />
                   Plasma Shield Defense
                 </h3>
 
-                <p className="text-gray-400 leading-relaxed mb-6 text-sm">
+                <p className="text-gray-400 leading-relaxed mb-4 lg:mb-6 text-xs sm:text-sm">
                   Next-generation plasma field generation utilizing magnetic
                   confinement technology. Creates high-energy barriers capable
                   of material vaporization and trajectory deflection through
@@ -435,9 +493,9 @@ export default function Page() {
                 </p>
 
                 <motion.div
-                  whileHover={{ scale: 2, zIndex: 10 }}
+                  whileHover={{ scale: 1.05, zIndex: 10 }}
                   transition={{ duration: 0.3 }}
-                  className="w-full h-48 bg-black border border-gray-700 rounded-lg flex items-center justify-center text-white font-mono text-sm relative mb-6 cursor-pointer"
+                  className="w-full h-40 sm:h-48 bg-black border border-gray-700 rounded-lg flex items-center justify-center text-white font-mono text-sm relative mb-4 lg:mb-6 cursor-pointer"
                 >
                   <video
                     src="/media3.webm"
@@ -449,8 +507,8 @@ export default function Page() {
                 </motion.div>
 
                 {/* Specs */}
-                <div className="bg-gray-900/80 p-6 rounded-lg border-l-2 border-gray-500 mb-6">
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-900/80 p-4 sm:p-6 rounded-lg border-l-2 border-gray-500 mb-4 lg:mb-6">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-4">
                     <div className="flex justify-between font-mono text-xs">
                       <span className="text-gray-400 uppercase">
                         Power Req.
@@ -480,7 +538,7 @@ export default function Page() {
 
                 <button
                   onClick={() => deploySystem("plasma")}
-                  className="w-full py-4 bg-transparent border border-gray-500 text-white font-mono font-semibold text-sm uppercase tracking-wide rounded-lg hover:bg-white hover:text-black transition-all duration-300 relative overflow-hidden group"
+                  className="w-full py-3 sm:py-4 bg-transparent border border-gray-500 text-white font-mono font-semibold text-xs sm:text-sm uppercase tracking-wide rounded-lg hover:bg-white hover:text-black transition-all duration-300 relative overflow-hidden group"
                 >
                   <div className="absolute inset-0 bg-white transform -translate-x-full group-hover:translate-x-0 transition-transform duration-400 -z-10" />
                   Deploy System
@@ -493,13 +551,13 @@ export default function Page() {
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 0.5 }}
-              className="text-center mt-16"
+              className="text-center mt-12 lg:mt-16"
             >
               <Link
                 href="/"
-                className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-semibold hover:scale-105 transition-all duration-300"
+                className="inline-flex items-center gap-2 px-6 py-3 sm:px-8 sm:py-4 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-semibold hover:scale-105 transition-all duration-300 text-sm sm:text-base"
               >
-                <Home className="w-5 h-5" />
+                <Home className="w-4 h-4 sm:w-5 sm:h-5" />
                 Return to DefendEarth Dashboard
               </Link>
             </motion.div>
