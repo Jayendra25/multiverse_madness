@@ -1,6 +1,14 @@
-import { NextRequest, NextResponse } from "next/server";
+// src/app/api/nasa/route.ts
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
-// Minimal GET handler to make it a valid module
 export async function GET(req: NextRequest) {
-  return NextResponse.json({ message: "API working" });
+  // example response
+  return NextResponse.json({ message: "Hello NASA API" });
+}
+
+// Agar POST bhi hai
+export async function POST(req: NextRequest) {
+  const body = await req.json();
+  return NextResponse.json({ received: body });
 }
