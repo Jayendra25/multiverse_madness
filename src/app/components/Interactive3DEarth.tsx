@@ -710,7 +710,7 @@ export default function Interactive3DEarth({
   >(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [impactLocation, setImpactLocation] = useState<string>("");
-  const timeoutRef = useRef<NodeJS.Timeout>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleSurfaceClick = useCallback(
     async (clickData: any) => {
