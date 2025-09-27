@@ -11,14 +11,50 @@ import {
   Mountain,
   BarChart3,
   TrendingUp,
-  Star,
 } from "lucide-react";
+
+interface MeteorShower {
+  id: number;
+  left: number;
+  top: number;
+  delay: number;
+  duration: number;
+  opacity: number;
+}
+
+interface AnimatedCardProps {
+  children: React.ReactNode;
+  delay?: number;
+  className?: string;
+}
+
+interface StatCardProps {
+  value: string;
+  label: string;
+  change?: string;
+  trend?: "up" | "down" | "stable";
+  delay?: number;
+}
+
+interface ProgressBarProps {
+  label: string;
+  percentage: number;
+  color?: "blue" | "green" | "yellow" | "red";
+  delay?: number;
+}
 
 const EducationPage = () => {
   const [visibleSection, setVisibleSection] = useState("");
-  const [meteorShowers, setMeteorShowers] = useState([]);
+  const [meteorShowers, setMeteorShowers] = useState<MeteorShower[]>([]);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isClient) return;
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -30,13 +66,14 @@ const EducationPage = () => {
       { threshold: 0.3 }
     );
 
-    document.querySelectorAll("[data-section]").forEach((el) => {
+    const sections = document.querySelectorAll("[data-section]");
+    sections.forEach((el) => {
       observer.observe(el);
     });
 
     // Generate random meteors
     const generateMeteors = () => {
-      const meteors = [];
+      const meteors: MeteorShower[] = [];
       for (let i = 0; i < 15; i++) {
         meteors.push({
           id: i,
@@ -57,15 +94,18 @@ const EducationPage = () => {
       observer.disconnect();
       clearInterval(meteorInterval);
     };
-  }, []);
+  }, [isClient]);
 
-  const AnimatedCard = ({ children, delay = 0, className = "" }) => {
+  const AnimatedCard = ({
+    children,
+    delay = 0,
+    className = "",
+  }: AnimatedCardProps) => {
     return (
       <div
-        className={`transform transition-all duration-1000 ease-out hover:scale-105 ${className}`}
+        className={`transform transition-all duration-1000 ease-out hover:scale-105 opacity-0 ${className}`}
         style={{
-          animationDelay: `${delay}ms`,
-          animation: "slideUp 0.8s ease-out forwards",
+          animation: `slideUp 0.8s ease-out ${delay}ms forwards`,
         }}
       >
         {children}
@@ -73,20 +113,13 @@ const EducationPage = () => {
     );
   };
 
-  const FloatingElement = ({ children, className = "" }) => {
-    return (
-      <div
-        className={`animate-bounce ${className}`}
-        style={{
-          animation: "float 3s ease-in-out infinite",
-        }}
-      >
-        {children}
-      </div>
-    );
-  };
-
-  const StatCard = ({ value, label, change, trend, delay = 0 }) => {
+  const StatCard = ({
+    value,
+    label,
+    change,
+    trend,
+    delay = 0,
+  }: StatCardProps) => {
     return (
       <AnimatedCard delay={delay} className="group">
         <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-700/30 rounded-xl p-6 hover:border-blue-500/50 transition-all duration-500">
@@ -94,14 +127,14 @@ const EducationPage = () => {
             <div className="text-3xl font-bold text-white group-hover:text-blue-400 transition-colors">
               {value}
             </div>
-            {trend && (
+            {trend && trend !== "stable" && (
               <div
                 className={`flex items-center text-sm ${
                   trend === "up" ? "text-green-400" : "text-red-400"
                 }`}
               >
                 <TrendingUp
-                  className={`w-4 h-4 mr-1 ${
+                  className={`w-4 h-4 mr-1 transition-transform ${
                     trend === "down" ? "rotate-180" : ""
                   }`}
                 />
@@ -115,7 +148,19 @@ const EducationPage = () => {
     );
   };
 
-  const ProgressBar = ({ label, percentage, color = "blue", delay = 0 }) => {
+  const ProgressBar = ({
+    label,
+    percentage,
+    color = "blue",
+    delay = 0,
+  }: ProgressBarProps) => {
+    const colorClasses = {
+      blue: "from-blue-500 to-blue-400",
+      green: "from-green-500 to-green-400",
+      yellow: "from-yellow-500 to-yellow-400",
+      red: "from-red-500 to-red-400",
+    };
+
     return (
       <AnimatedCard delay={delay}>
         <div className="mb-6">
@@ -125,14 +170,22 @@ const EducationPage = () => {
           </div>
           <div className="w-full bg-gray-800 rounded-full h-2">
             <div
-              className={`bg-gradient-to-r from-${color}-500 to-${color}-400 h-2 rounded-full transition-all duration-1000 ease-out`}
-              style={{ width: `${percentage}%`, animationDelay: `${delay}ms` }}
+              className={`bg-gradient-to-r ${colorClasses[color]} h-2 rounded-full transition-all duration-1000 ease-out`}
+              style={{ width: `${percentage}%` }}
             ></div>
           </div>
         </div>
       </AnimatedCard>
     );
   };
+
+  if (!isClient) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white overflow-hidden relative flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white overflow-hidden relative">
@@ -221,8 +274,7 @@ const EducationPage = () => {
           height: 2px;
           background: linear-gradient(45deg, #ffffff, #60a5fa, #3b82f6);
           border-radius: 50%;
-          box-shadow: 0 0 6px #60a5fa,
-            -100px -100px 10px rgba(96, 165, 250, 0.3);
+          box-shadow: 0 0 6px #60a5fa;
           animation: meteor linear infinite;
         }
 
@@ -270,17 +322,19 @@ const EducationPage = () => {
         {/* Floating Particles */}
         <div className="absolute inset-0">
           {Array.from({ length: 20 }).map((_, i) => (
-            <FloatingElement
-              key={i}
-              className={`absolute text-gray-600`}
+            <div
+              key={`particle-${i}`}
+              className="absolute"
               style={{
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 3}s`,
+                animation: `float 3s ease-in-out ${
+                  Math.random() * 3
+                }s infinite`,
               }}
             >
               <div className="w-1 h-1 bg-white rounded-full animate-pulse-custom" />
-            </FloatingElement>
+            </div>
           ))}
         </div>
       </div>
@@ -304,7 +358,9 @@ const EducationPage = () => {
           </AnimatedCard>
 
           <AnimatedCard delay={500}>
-            <ChevronDown className="w-8 h-8 mx-auto animate-bounce text-gray-400" />
+            <div className="animate-bounce">
+              <ChevronDown className="w-8 h-8 mx-auto text-gray-400" />
+            </div>
           </AnimatedCard>
         </div>
       </section>
@@ -312,21 +368,100 @@ const EducationPage = () => {
       {/* Navigation Dots */}
       <div className="fixed right-8 top-1/2 transform -translate-y-1/2 z-50 space-y-4">
         {["basics", "statistics", "types", "impacts", "defense"].map(
-          (section, index) => (
-            <div
+          (section) => (
+            <button
               key={section}
-              className={`w-3 h-3 rounded-full border-2 border-white cursor-pointer transition-all duration-300 ${
+              className={`w-3 h-3 rounded-full border-2 border-white transition-all duration-300 ${
                 visibleSection === section ? "bg-white" : "bg-transparent"
               }`}
-              onClick={() =>
-                document
-                  .getElementById(section)
-                  ?.scrollIntoView({ behavior: "smooth" })
-              }
+              onClick={() => {
+                const element = document.getElementById(section);
+                if (element) {
+                  element.scrollIntoView({ behavior: "smooth" });
+                }
+              }}
+              aria-label={`Scroll to ${section} section`}
             />
           )
         )}
       </div>
+
+      {/* Basic Understanding Section */}
+      <section id="basics" data-section className="py-20 px-6">
+        <div className="max-w-7xl mx-auto">
+          <AnimatedCard>
+            <h2 className="text-5xl font-light text-center mb-16 text-gray-200">
+              The Basics
+            </h2>
+          </AnimatedCard>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <AnimatedCard delay={200} className="group">
+              <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-700/30 rounded-2xl p-8 h-full hover:border-gray-600/50 transition-all duration-500">
+                <div className="flex items-center mb-6">
+                  <div className="w-16 h-16 bg-gradient-to-br from-gray-600 to-gray-800 rounded-full flex items-center justify-center mr-4 group-hover:scale-110 transition-transform duration-300">
+                    <Mountain className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-light text-gray-200">
+                    Asteroids
+                  </h3>
+                </div>
+                <p className="text-gray-400 leading-relaxed mb-4">
+                  Rocky remnants from the solar system's formation, primarily
+                  orbiting between Mars and Jupiter.
+                </p>
+                <div className="space-y-2 text-sm text-gray-500">
+                  <div>• Size: 1m to 1000km diameter</div>
+                  <div>• Composition: Rock, metal, carbon</div>
+                  <div>• Location: Asteroid belt, NEOs</div>
+                </div>
+              </div>
+            </AnimatedCard>
+
+            <AnimatedCard delay={400} className="group">
+              <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-700/30 rounded-2xl p-8 h-full hover:border-gray-600/50 transition-all duration-500">
+                <div className="flex items-center mb-6">
+                  <div className="w-16 h-16 bg-gradient-to-br from-gray-600 to-gray-800 rounded-full flex items-center justify-center mr-4 group-hover:scale-110 transition-transform duration-300">
+                    <Zap className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-light text-gray-200">
+                    Meteoroids
+                  </h3>
+                </div>
+                <p className="text-gray-400 leading-relaxed mb-4">
+                  Small rocky or metallic bodies in outer space, smaller than
+                  asteroids.
+                </p>
+                <div className="space-y-2 text-sm text-gray-500">
+                  <div>• Size: Grain of sand to 1m</div>
+                  <div>• Origin: Asteroids, comets</div>
+                  <div>• Billions in space</div>
+                </div>
+              </div>
+            </AnimatedCard>
+
+            <AnimatedCard delay={600} className="group">
+              <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-700/30 rounded-2xl p-8 h-full hover:border-gray-600/50 transition-all duration-500">
+                <div className="flex items-center mb-6">
+                  <div className="w-16 h-16 bg-gradient-to-br from-gray-600 to-gray-800 rounded-full flex items-center justify-center mr-4 group-hover:scale-110 transition-transform duration-300">
+                    <Globe className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-2xl font-light text-gray-200">Meteors</h3>
+                </div>
+                <p className="text-gray-400 leading-relaxed mb-4">
+                  The bright streaks of light when meteoroids enter Earth's
+                  atmosphere.
+                </p>
+                <div className="space-y-2 text-sm text-gray-500">
+                  <div>• Also called "shooting stars"</div>
+                  <div>• Burn up at 50-120km altitude</div>
+                  <div>• 25 million daily</div>
+                </div>
+              </div>
+            </AnimatedCard>
+          </div>
+        </div>
+      </section>
 
       {/* Statistics Section */}
       <section
@@ -515,83 +650,6 @@ const EducationPage = () => {
                       Energy: ~0.5 MT TNT
                     </div>
                   </div>
-                </div>
-              </div>
-            </AnimatedCard>
-          </div>
-        </div>
-      </section>
-
-      {/* Basic Understanding Section */}
-      <section id="basics" data-section className="py-20 px-6">
-        <div className="max-w-7xl mx-auto">
-          <AnimatedCard>
-            <h2 className="text-5xl font-light text-center mb-16 text-gray-200">
-              The Basics
-            </h2>
-          </AnimatedCard>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <AnimatedCard delay={200} className="group">
-              <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-700/30 rounded-2xl p-8 h-full hover:border-gray-600/50 transition-all duration-500">
-                <div className="flex items-center mb-6">
-                  <div className="w-16 h-16 bg-gradient-to-br from-gray-600 to-gray-800 rounded-full flex items-center justify-center mr-4 group-hover:scale-110 transition-transform duration-300">
-                    <Mountain className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-2xl font-light text-gray-200">
-                    Asteroids
-                  </h3>
-                </div>
-                <p className="text-gray-400 leading-relaxed mb-4">
-                  Rocky remnants from the solar system's formation, primarily
-                  orbiting between Mars and Jupiter.
-                </p>
-                <div className="space-y-2 text-sm text-gray-500">
-                  <div>• Size: 1m to 1000km diameter</div>
-                  <div>• Composition: Rock, metal, carbon</div>
-                  <div>• Location: Asteroid belt, NEOs</div>
-                </div>
-              </div>
-            </AnimatedCard>
-
-            <AnimatedCard delay={400} className="group">
-              <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-700/30 rounded-2xl p-8 h-full hover:border-gray-600/50 transition-all duration-500">
-                <div className="flex items-center mb-6">
-                  <div className="w-16 h-16 bg-gradient-to-br from-gray-600 to-gray-800 rounded-full flex items-center justify-center mr-4 group-hover:scale-110 transition-transform duration-300">
-                    <Zap className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-2xl font-light text-gray-200">
-                    Meteoroids
-                  </h3>
-                </div>
-                <p className="text-gray-400 leading-relaxed mb-4">
-                  Small rocky or metallic bodies in outer space, smaller than
-                  asteroids.
-                </p>
-                <div className="space-y-2 text-sm text-gray-500">
-                  <div>• Size: Grain of sand to 1m</div>
-                  <div>• Origin: Asteroids, comets</div>
-                  <div>• Billions in space</div>
-                </div>
-              </div>
-            </AnimatedCard>
-
-            <AnimatedCard delay={600} className="group">
-              <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border border-gray-700/30 rounded-2xl p-8 h-full hover:border-gray-600/50 transition-all duration-500">
-                <div className="flex items-center mb-6">
-                  <div className="w-16 h-16 bg-gradient-to-br from-gray-600 to-gray-800 rounded-full flex items-center justify-center mr-4 group-hover:scale-110 transition-transform duration-300">
-                    <Globe className="w-8 h-8 text-white" />
-                  </div>
-                  <h3 className="text-2xl font-light text-gray-200">Meteors</h3>
-                </div>
-                <p className="text-gray-400 leading-relaxed mb-4">
-                  The bright streaks of light when meteoroids enter Earth's
-                  atmosphere.
-                </p>
-                <div className="space-y-2 text-sm text-gray-500">
-                  <div>• Also called "shooting stars"</div>
-                  <div>• Burn up at 50-120km altitude</div>
-                  <div>• 25 million daily</div>
                 </div>
               </div>
             </AnimatedCard>
