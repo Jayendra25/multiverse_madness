@@ -853,7 +853,11 @@ export default function Interactive3DEarth({
           alpha: false,
           powerPreference: "high-performance",
         }}
-        dpr={Math.min(window.devicePixelRatio, 2)} // Limit pixel ratio
+        dpr={
+          typeof window !== "undefined"
+            ? Math.min(window.devicePixelRatio, 2)
+            : 1
+        }
       >
         <Suspense fallback={null}>
           {/* Enhanced lighting */}
